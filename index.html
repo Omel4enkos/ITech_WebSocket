@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<!-- Подключение Bootstrap чтобы все выглядело красиво -->
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css">
+	<title>Чат программа</title>
+	<!-- Свои стили -->
+	<style>
+		body {
+			background: #fcfcfc;
+		}
+	</style>
+</head>
+<body>
+	<!-- Основная часть страницы -->
+	<div class="container">
+		<div class="py-5 text-center">
+			<h2>Чат программа</h2>
+			<p class="lead">Укажите ваше имя и начинайте переписку</p>
+		</div>
+		<div class="row">
+			<div class="col-6">
+				<!-- Форма для получения сообщений и имени -->
+				<h3>Форма сообщений</h3>
+				<form id="messForm">
+					<label for="name">Имя</label>
+					<input type="text" name="name" id="user" placeholder="Введите имя" class="form-control">
+					<br>
+					<label for="message">Сообщение</label>
+					<textarea name="message" id="message" class="form-control" placeholder="Введите сообщение"></textarea>
+					<br>
+					<input type="submit" value="Отправить" class="btn btn-danger">
+				</form>
+			</div>
+			<div class="col-6">
+				<h3>Сообщения</h3>
+				<!-- Вывод всех сообщений будет здесь -->
+				<div id="all_messages"></div>
+			</div>
+		</div>
+	</div>
+    <!-- Подключаем jQuery, а также Socket.io -->
+    <script src="/socket.io/socket.io.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script>
+        // У каждого пользователя будет случайный 
+        // стиль для блока с сообщениями
+		var min = 1;
+		var max = 6;
+        var random = Math.floor(Math.random() * (max - min)) + min;
+        var color;
+        switch(random){
+            case 1: color = 'primary';
+                break;
+            case 2: color = 'secondary';
+                break;
+            case 3: color = 'success';
+                break;
+            case 4: color = 'danger';
+                break;
+            case 5: color = 'warning';
+                break;
+            case 6: color = 'info';
+                break;
+        }
+        //Функция для работы с данными на сайте
+        $(function(){
+            // Включаем socket.io и отслеживаем все подключения
+            var socket = io(); 
+            var form = $('#messForm');//Для обращения к форме
+            var user = $('#user');//Поле имя пользователя
+            var message = $('#message');//Поле сообщения
+            var all_messages = $('#all_messages');//Поле всех сообщений
+            // Отслеживаем нажатие на кнопку в форме сообщений
+            form.submit(function(event){
+                // Предотвращаем классическое поведение формы
+                event.preventDefault();
+                // В сокет отсылаем новое событие 'send message'
+                if(user.val() === '' || message.val() ===''){
+                    return;
+                }
+                else{
+                    socket.emit('send message',{message: message.val(),
+                                            user: user.val(),
+                                            color: color });
+                // Очищаем поле с сообщением
+				message.val('');
+                }
+            });
+            // Здесь отслеживаем событие 'receive message', 
+            // которое должно приходить из сокета
+            socket.on('receive message',function(data){
+            // Встраиваем полученное сообщение в блок с сообщениями
+            all_messages.append("<div class='alert alert-" + data.color +
+             "'><b>" + data.user + "</b>: " + data.message + "</div>");
+            });
+        });
+    </script>
+</body>
+</html>
